@@ -1,52 +1,34 @@
+
 # -*- coding: utf-8 -*-
+import sys
 from importlib import reload
+from hil.event import HilEvent
+from hil.response import HilResponse
 
 class HilControl:
   def __init__(self, core):
-    self.events = {}
     self.components = {}
 
-  def __del__(self):
-    pass
-
   def install(self, component):
-    if True: #!self.components.has_key(component):
-      instance = self.components[component] = component()
-      try:
-        for event, fn in instance.events:
-          self.subscribe(component, event, fn)
-      except:
-        pass
+    if not (component in self.components):
+      print(component.__name__, "component instaled.")
+      self.components[component] = component()
     else:
-      print("This component is running.")
-
-  def reload(self, component):
-    self.components[component.__name__] = reload(component)
+      print(component.__name__, "is running.")
 
   def remove(self, component):
-    if self.events.has_key(component):
-      del self.events[component]
-    if self.components.has_key(component):
+    if component in self.components:
       del self.components[component]
 
-  def subscribe(self, component, event, fn):
-    if not self.events.has_key(component):
-      self.events[component] = {}
-    self.events[component][event] = fn
+  def reload(self, component):
+    module = sys.modules[component.__module__]
+    self.components[component] = reload(module)
+    return self.components[component]
 
-  def unsubscribe(self, component, event, fn):
-    if self.events.has_key(component) and self.events[component].has_key(event):
-      del self.events[component][event]
-    else:
-      return False
-
-
-  def trigger(self, component, event, data):
-    if self.events.has_key(component) and self.events[component].has_key(event):
-      fn = self.events[component][event]
-      return fn(data)
-    else:
-      return False
-
-
-
+  def trigger(self, component, target, args):
+    print("\t Running", target, component)
+    component = self.reload(component)
+    if isinstance(target, str):
+      target = getattr(component, target)
+    event = HilEvent(component, target, args)
+    event.run()
