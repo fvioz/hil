@@ -2,6 +2,7 @@
 
 from threading import Thread
 from multiprocessing import Process, Queue, freeze_support, set_start_method
+from concurrent.futures import ProcessPoolExecutor
 
 class HilEvent(Thread):
   def __init__(self, component, target, args):
@@ -9,6 +10,7 @@ class HilEvent(Thread):
     self.component = component
     self.target = target
     self.args = args
+    self.pool = ProcessPoolExecutor(3)
 
   def run(self):
     set_start_method('forkserver')

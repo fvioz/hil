@@ -1,40 +1,39 @@
-from flask.ext.api import FlaskAPI
+# -*- coding: utf-8 -*-
+
+from hug.api import API
 from multiprocessing import Process
+from hil.middleware import HilApiMiddleware
+from wsgiref.simple_server import make_server
 
 class HilApi:
-  def __init__(self, core):
-    self.app = FlaskAPI(__name__)
-    self.core = core
-    self.server = Process(target=self.run, args=())
-    self.setRoutes()
-    self.start()
+  def __init__(self, core, module):
+    self.api = API(module)
+    self.api.directive('core', core)
+    self.api.http.add_middleware(HilApiMiddleware(core))
+    self.running = False
 
-  def events(event):
+  def __del__(self):
+    self.stop()
+
+  def start(self, port = 8000):
     """
-    Retrieve avalaible events.
+    Start the api server
     """
-    return {}
+    if not self.running:
+      print("Serving on port {0} ...".format(port))
 
-  def createEvent(event):
+      sv = self.api.http.server()
+      httpd = make_server('', port, sv)
+
+      self.__server_process = Process(target=httpd.serve_forever)
+      self.__server_process.start()
+      self.running = True
+
+  def stop(self):
     """
-    Create an event.
+    Stop the api server
     """
-    param = str(request.data.get('text', ''))
-    return '', status.HTTP_201_CREATED
-
-  def run(self):
-    self.app.run(host='127.0.0.1', port=5000, debug=True)
-
-  def setRoutes(self):
-    """ Set all routes """
-    # Events
-    self.app.add_url_rule('/events', 'events', self.events, methods=['GET'])
-    self.app.add_url_rule('/events/<string:event>', 'events/<string:event>', self.createEvent, methods=['POST'])
-
-  def start(self):
-    self.server.start()
-
-  def stop():
-    server.terminate()
-    server.join()
-
+    if self.running:
+      self.__server_process.terminate()
+      self.__server_process.join()
+      self.running = False

@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from slugify import slugify
 
 class HilComponent(object):
-
-  name = __name__
-  api_name = slugify(__name__)
 
   def __init__(self):
     super(HilComponent, self).__init__()
