@@ -6,21 +6,8 @@ def echo(response):
   return True
 
 @hug.post('/')
-def event(request, response, component: hug.types.text, event: hug.types.text, *args):
+def event(request, response, component: hug.types.text, event: hug.types.text, **kwargs):
   core = request.context['core']
-  trigger = core.trigger(component, event, args)
-  if trigger:
-    response.status = HTTP_201
-  else:
-    response.status = HTTP_400
-  return trigger
-
-@hug.get('/test')
-def test(request, response):
-  core = request.context['core']
-  trigger = core.trigger('Bell', 'play')
-  if trigger:
-    response.status = HTTP_201
-  else:
-    response.status = HTTP_400
+  trigger = core.trigger(component, event, kwargs)
+  response.status = HTTP_201 if trigger else HTTP_400
   return trigger

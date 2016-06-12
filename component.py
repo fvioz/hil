@@ -13,3 +13,7 @@ class HilComponent(object):
     method_list = list(set(dir(cls)) - set(dir(object_methods)))
     method_list = list(set(method_list) - set(['__api_methods__']))
     return [method for method in method_list if callable(getattr(cls, method))]
+
+  # TODO: Scope all calls to this method
+  def run(method, *args):
+    pass

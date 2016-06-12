@@ -1,52 +1,80 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import inspect
+import importlib
+import multiprocessing
 
-from importlib import reload
-from hil.event import HilEvent
 from hil.response import HilResponse
+from hil.component import HilComponent
 
 class HilControl:
   def __init__(self, core):
-    self.components = {}
+    self.klasses = []
 
-  def install(self, component):
-    if not (component in self.components):
-      print(component.__name__, "component instaled.")
-      self.components[component.__name__] = component
-    else:
-      print(component.__name__, "is already installed.")
-
-  def exist(self, component_name, target = None):
-    if component_name in self.components:
+  def exist(self, klass, target = None):
+    if klass in self.klasses:
       if target == None:
         return True
-      # FIXME
-      return True
-      if target in self.components[component_name]:
-        return True
+      else:
+        if target in klass.__dict__:
+          return True
+        else:
+          return False
+    else:
+      return False
+
+  def get_klass(self, klass_name):
+    for klass in self.klasses:
+      if klass.__name__ == klass_name:
+        return klass
     return False
 
-  def remove(self, component):
-    if self.exist(component):
-      del self.components[component]
+  def install(self, klass):
+    if not inspect.isclass(klass):
+      raise TypeError("Component should be a HilComponet Class")
 
-  def reload(self, component):
-    module = sys.modules[component.__module__]
-    self.components[component] = reload(module)
-    return self.components[component]
+    if not issubclass(klass, HilComponent):
+      raise TypeError("Param must be of type HilComponent")
 
-  def trigger(self, component_name, target, args):
-    if self.exist(component_name, target):
-      print("\t Running", target, component_name)
-      component = self.reload(self.components[component_name])
-      if isinstance(target, str):
-        target = getattr(klass, target)
-      event = HilEvent(component, target, args)
-      event.run()
+    if not (klass in self.klasses):
+      print(klass.__name__, "component instaled.")
+      self.klasses.append(klass)
+    else:
+      print(klass.__name__, "is already installed.")
+
+  def remove(self, klass):
+    if self.exist(klass):
+      del self.klasses[klass]
       return True
     else:
       return False
+
+  def reload(self, klass):
+    module = importlib.reload(klass.__module__)
+    return self.klasses[klass]
+
+  def trigger(self, klass_name, target, args):
+    klass = self.get_klass(klass_name)
+    if not klass:
+      return False
+
+    if self.exist(klass, target):
+      print("\t Running", target, klass_name)
+      # component = self.reload(self.klasses[klass_name])
+      if isinstance(target, str):
+        target = getattr(klass, target)
+      self.run(target, args)
+      return True
+    else:
+      return False
+
+  def run(self, target, args):
+    context = multiprocessing.get_context('spawn')
+    pr = context.Process(target=target, args=args)
+    pr.start()
+    # TODO: join the proccess Thread < pr.join() >
+    pass
 
   def stop(self):
     return
