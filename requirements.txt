@@ -3,3 +3,5 @@ hug==2.1.2
 python-mimeparse==1.5.2
 requests==2.10.0
 six==1.10.0
+scikit-learn==0.17.1
+jsonschema==2.5.1

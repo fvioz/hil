@@ -10,6 +10,7 @@ from hil.component import HilComponent
 
 class HilControl:
   def __init__(self, core):
+    self.core = core
     self.klasses = []
 
   def exist(self, klass, target = None):
