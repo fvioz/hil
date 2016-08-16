@@ -6,21 +6,23 @@ from hil.middleware import HilApiMiddleware
 from wsgiref.simple_server import make_server
 
 class HilApi:
-  def __init__(self, core, module):
+  def __init__(self, module):
     self.api = API(module)
-    self.api.directive('core', core)
-    self.api.http.add_middleware(HilApiMiddleware(core))
     self.running = False
 
   def __del__(self):
     self.stop()
 
-  def start(self, port = 8000):
+  def start(self, control, port = 8000):
     """
     Start the api server
     """
+    self.api.directive('control', control)
+    self.api.http.add_middleware(HilApiMiddleware(control))
+
     if not self.running:
-      print("Serving on port {0} ...".format(port))
+      print("=> Application starting on 0.0.0.0:{0}".format(port))
+      print("=> Ctrl-C to shutdown server\n")
 
       sv = self.api.http.server()
       httpd = make_server('', port, sv)

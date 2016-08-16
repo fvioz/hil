@@ -1,81 +1,50 @@
 # -*- coding: utf-8 -*-
 
-import sys
-import inspect
-import importlib
+import threading
 import multiprocessing
 
-from hil.response import HilResponse
-from hil.component import HilComponent
+from hil.log import logger
+from hil.box import HilBox
+from hil.config import HilConfig
 
 class HilControl:
-  def __init__(self, core):
-    self.core = core
-    self.klasses = []
+  def __init__(self, config):
+    self.config = config
+    self.parent_conn, self.child_conn = multiprocessing.Pipe()
+    self.current_context = self.config.context(self.child_conn, self.config.contexts)
+    multiprocessing.Process(target=self.current_context.call).start()
 
-  def exist(self, klass, target = None):
-    if klass in self.klasses:
-      if target == None:
-        return True
+  def __del__(self):
+    self.parent_conn.send('close')
+
+  def trigger(self, id, participation, callback, timeout):
+    """Launchs the current process .
+
+    Keyword arguments:
+    real -- the real part (default 0.0)
+    imag -- the imaginary part (default 0.0)
+    """
+    if self.__participationAllowed(participation) == True:
+      action_name = self.config.getAction(self.parent_conn, participation)
+      if action_name == None:
+        logger.info("[#{}] The request did not have any action".format(id))
+        return False
       else:
-        if target in klass.__dict__:
-          return True
-        else:
-          return False
+        actions = self.__getActionModules(action_name)
+        box = HilBox(id, actions, callback, timeout)
+        t = threading.Thread(target=box.run, args=())
+        t.setDaemon(True)
+        t.start()
+        logger.info("[#{}] Actions {} launched".format(id, actions))
+        return True
     else:
-      return False
+      logger.info("[#{}] The request is unprocessable".format(id))
+      return None
 
-  def get_klass(self, klass_name):
-    for klass in self.klasses:
-      if klass.__name__ == klass_name:
-        return klass
-    return False
+  def __participationAllowed(self, p):
+    """Returns True if given participation is on the config else False"""
+    return True if p in self.config.participations else False
 
-  def install(self, klass):
-    if not inspect.isclass(klass):
-      raise TypeError("Component should be a HilComponet Class")
-
-    if not issubclass(klass, HilComponent):
-      raise TypeError("Param must be of type HilComponent")
-
-    if not (klass in self.klasses):
-      print(klass.__name__, "component instaled.")
-      self.klasses.append(klass)
-    else:
-      print(klass.__name__, "is already installed.")
-
-  def remove(self, klass):
-    if self.exist(klass):
-      del self.klasses[klass]
-      return True
-    else:
-      return False
-
-  def reload(self, klass):
-    module = importlib.reload(klass.__module__)
-    return self.klasses[klass]
-
-  def trigger(self, klass_name, target, args):
-    klass = self.get_klass(klass_name)
-    if not klass:
-      return False
-
-    if self.exist(klass, target):
-      print("\t Running", target, klass_name)
-      # component = self.reload(self.klasses[klass_name])
-      if isinstance(target, str):
-        target = getattr(klass, target)
-      self.run(target, args)
-      return True
-    else:
-      return False
-
-  def run(self, target, args):
-    context = multiprocessing.get_context('spawn')
-    pr = context.Process(target=target, args=args)
-    pr.start()
-    # TODO: join the proccess Thread < pr.join() >
-    pass
-
-  def stop(self):
-    return
+  def __getActionModules(self, action_names):
+    """Returns the list of actions availables"""
+    return [a for a in self.config.apps if a.__name__ in action_names]

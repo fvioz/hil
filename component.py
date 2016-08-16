@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
-
 class HilComponent(object):
 
   def __init__(self):
@@ -14,6 +12,10 @@ class HilComponent(object):
     method_list = list(set(method_list) - set(['__api_methods__']))
     return [method for method in method_list if callable(getattr(cls, method))]
 
+  def call(self, child_conn):
+    results = self.run()
+    child_conn.send(results)
+
   # TODO: Scope all calls to this method
-  def run(method, *args):
-    pass
+  def run(self):
+    raise NotImplementedError
