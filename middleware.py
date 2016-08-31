@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-class HilApiMiddleware(object):
-  def __init__(self, control):
-    self.control = control
+class HILApiMiddleware(object):
+  def __init__(self, conn):
+    self.conn = conn
 
-  def control(self):
-    return self.control
+  def conn(self):
+    return self.conn
 
   def process_request(self, request, response):
-    request.context.update({ "control": self.control })
+    request.context.update({ "conn": self.conn })
 

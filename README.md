@@ -1,4 +1,4 @@
-# Human in the Loop (Hil)
+# Human in the Loop (HIL)
 
 Add description **[TODO]**
 
@@ -16,10 +16,10 @@ Add description **[TODO]**
 
    where `app` is the main application.
 
-2. Open the `app.py` file and import hil core:
+2. Open the `app.py` file and import HIL core:
 
   ```python
-  from hil import Core
+  from HIL import Core
   ```
 
 3. Create a new component file:
@@ -33,7 +33,7 @@ Add description **[TODO]**
 3. Open the `bell.py` file and write a sample component:
 
   ```python
-  from hil import Component
+  from HIL import Component
 
   class Bell(Component):
     def play():
@@ -84,4 +84,4 @@ Using a browser, go to `http://localhost:8000/documentation` and you'll see the 
 
 ## Sample Apps
 
-There is a sample app at <https://github.com/fvioz/hil-sample> please check
+There is a sample app at <https://github.com/fvioz/HIL-sample> please check

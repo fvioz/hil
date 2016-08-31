@@ -2,23 +2,24 @@
 
 from hug.api import API
 from multiprocessing import Process
-from hil.middleware import HilApiMiddleware
+from hil.middleware import HILApiMiddleware
 from wsgiref.simple_server import make_server
 
-class HilApi:
-  def __init__(self, module):
+class HILApi:
+  def __init__(self, module, conn):
     self.api = API(module)
+    self.conn = conn
     self.running = False
 
   def __del__(self):
     self.stop()
 
-  def start(self, control, port = 8000):
+  def start(self, port = 8000):
     """
     Start the api server
     """
-    self.api.directive('control', control)
-    self.api.http.add_middleware(HilApiMiddleware(control))
+    self.api.directive('conn', self.conn)
+    self.api.http.add_middleware(HILApiMiddleware(self.conn))
 
     if not self.running:
       print("=> Application starting on 0.0.0.0:{0}".format(port))

@@ -7,15 +7,26 @@ def echo(response):
   return True
 
 @hug.post('/')
-def event(request, response, participation: hug.types.text, callback: hug.types.text, timeout = 180):
+def event(request, response, participation: hug.types.text, role: hug.types.text, callback: hug.types.text, timeout = 180):
   id = str(int(time.time()))
-  control = request.context['control']
-  trigger = control.trigger(id, participation, callback, int(timeout))
+  conn = request.context['conn']
 
-  if trigger == True:
+  try:
+    conn.send({
+      "id": id,
+      "participation": participation,
+      "role": role,
+      "callback": callback,
+      "timeout": int(timeout)
+    })
+    res = conn.recv()
+  except:
+    res = None
+
+  if res == True:
     text = "Action user request accepted."
     response.status = HTTP_202
-  elif trigger == False:
+  elif res == False:
     text = "Action not found with current state."
     response.status = HTTP_404
   else:

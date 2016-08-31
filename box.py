@@ -4,12 +4,12 @@ import time
 import multiprocessing
 
 from hil.log import logger
-from hil.request import HilRequest
+from hil.feedback import HILFeedback
 
-class HilBox(object):
-  """docstring for HilBox"""
+class HILBox(object):
+  """docstring for HILBox"""
   def __init__(self, id, actions, callback, timeout):
-    super(HilBox, self).__init__()
+    super(HILBox, self).__init__()
     self.id = id
     self.actions = actions
     self.callback = callback
@@ -21,7 +21,7 @@ class HilBox(object):
 
   def launchProcess(self):
     for action in self.actions:
-      p = self.context.Process(target=action().call, args=(self.child_conn,))
+      p = self.context.Process(target=action().call, args=(self.child_conn, self.id))
       p.start()
       self.processes.append(p)
       logger.info("[#{}] Process {} started".format(self.id, action))
@@ -31,7 +31,7 @@ class HilBox(object):
     logger.info("[#{}] Proces output {}".format(self.id, responses))
 
     current_timeout = (time.time() - self.start)
-    req = HilRequest(self.id, self.callback, responses, timeout = 2)
+    req = HILFeedback(self.id, self.callback, responses, timeout = 2)
     p = self.context.Process(target=req.run, args=(self.child_conn,))
     p.start()
 

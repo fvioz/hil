@@ -5,60 +5,41 @@ import json
 import inspect
 
 from hil.log import logger
-from hil.context import HilContext
-from hil.component import HilComponent
+from hil.context import HILContext
+from hil.component import HILComponent
 
 from jsonschema import validate
 
-class HilConfig(object):
-  """docstring for HilConfig"""
-  def __init__(self, apps, context, schemaFileName = "schema.json", configFileName = "hil.json"):
-    super(HilConfig, self).__init__()
-
-    config = self.validateConfig(schemaFileName, configFileName)
-
-    self.participations = config.get("participations")
-    self.contexts       = config.get("contexts")
-    self.actions        = config.get("actions")
-    self.transitions    = config.get("transitions")
-    self.apps           = apps
-    self.context        = context
+class HILConfig(object):
+  """docstring for HILConfig"""
+  def __init__(self, conn, apps, context, schemaFileName = "schema.json", configFileName = "hil.json"):
+    super(HILConfig, self).__init__()
+    self.conn = conn
+    self.apps = apps
+    self.context = context
+    self._config = self.validateConfig(schemaFileName, configFileName)
 
   @property
   def participations(self):
-    return self._participations
-
-  @participations.setter
-  def participations(self, p):
-    self._participations = p
+    return list(self._config.keys())
 
   @property
   def contexts(self):
-    return self._contexts
-
-  @contexts.setter
-  def contexts(self, c):
-    self._contexts = c
-
-  @contexts.deleter
-  def contexts(self):
-    del self._contexts
+    data = []
+    for k,v in self._config.items():
+      for i in self._config[k]:
+        for c in i.get("contexts"):
+          data.append(c)
+    return data
 
   @property
-  def actions(self):
-    return self._actions
-
-  @actions.setter
-  def actions(self, a):
-    self._actions = a
-
-  @property
-  def transitions(self):
-    return self._transitions
-
-  @transitions.setter
-  def transitions(self, p):
-    self._transitions = p
+  def attention_levels(self):
+    data = []
+    for k,v in self._config.items():
+      for i in self._config[k]:
+        for c in list(i.get("attention_levels")):
+          data.append(c)
+    return data
 
   @property
   def apps(self):
@@ -81,19 +62,19 @@ class HilConfig(object):
     apps = list(set(apps))
     for a in apps:
       if not inspect.isclass(a):
-        raise Exception("App must be a HilComponet class")
+        raise Exception("App must be a HILComponet class")
 
-      if not issubclass(a, HilComponent):
-        raise Exception("{0} must be a HilComponent type.".format(a.__name__))
+      if not issubclass(a, HILComponent):
+        raise Exception("{0} must be a HILComponent type.".format(a.__name__))
     self._apps = apps
 
   @context.setter
   def context(self, c):
     if not inspect.isclass(c):
-      raise Exception("Context must be a HilContext class.")
+      raise Exception("Context must be a HILContext class.")
 
-    if not issubclass(c, HilContext):
-      raise Exception("{0} must be a HilContext type.".format(c.__name__))
+    if not issubclass(c, HILContext):
+      raise Exception("{0} must be a HILContext type.".format(c.__name__))
     self._context = c
 
   def validateConfig(self, schemaFileName, configFileName):
@@ -122,23 +103,39 @@ class HilConfig(object):
 
     return config
 
-  def getAction(self, conn, participation):
-    result = None
-
+  def getAction(self, participation, role):
     try:
-      conn.send('contexts')
-      data = conn.recv()
+      self.conn.send('contexts')
+      data = self.conn.recv()
     except:
       data = {}
 
-    for i in self.transitions[participation]:
-      result = i['result']
-      for j in self.contexts:
-        if i[j] == '*' or ((j in data) and (i[j] == data[j])):
+    if not participation in self._config: return None
+
+    current_level = data.get("attention_level")
+    current_participation = self._config[participation]
+
+    for i in current_participation:
+
+      levels = i.get("attention_levels")
+
+      if not current_level in levels: continue
+
+      for k, v in i.get("contexts").items():
+        if data.get(k) == v:
           continue
         else:
-          result = None
+          levels = None
           break
-    return result
 
+      if levels:
+        components = []
+        roles = levels.get(current_level)
+        for r in role.split(':'):
+          if r in roles:
+            for c in roles[r]:
+              components.append(c)
+        if components:
+          return components
 
+    return None

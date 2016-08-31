@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from hil.core import HilCore as Core
-from hil.log import logger as HilLogger
-from hil.context import HilContext as Context
-from hil.component import HilComponent as Component
+from hil.core import HILCore as Core
+from hil.log import logger as Logger
+from hil.context import HILContext as Context
+from hil.component import HILComponent as Component
