@@ -8,9 +8,11 @@ from hil.feedback import HILFeedback
 
 class HILBox(object):
   """docstring for HILBox"""
-  def __init__(self, id, actions, callback, timeout):
+  def __init__(self, id, participation, role, actions, callback, timeout):
     super(HILBox, self).__init__()
     self.id = id
+    self.role = role
+    self.participation = participation
     self.actions = actions
     self.callback = callback
     self.timeout = timeout
@@ -21,7 +23,7 @@ class HILBox(object):
 
   def launchProcess(self):
     for action in self.actions:
-      p = self.context.Process(target=action().call, args=(self.child_conn, self.id))
+      p = self.context.Process(target=action().call, args=(self.child_conn, self.id, self.participation, self.role))
       p.start()
       self.processes.append(p)
       logger.info("[#{}] Process {} started".format(self.id, action))

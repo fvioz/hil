@@ -38,13 +38,13 @@ class HILControl(object):
     """Launchs the current process"""
     if self._participationAllowed(participation) == True:
       action_name = self.config.getAction(participation, role)
-      print(action_name)
+
       if action_name == None:
         logger.info("[#{}] The request did not have any action".format(id))
         return False
       else:
         actions = self._getActionModules(action_name)
-        box = HILBox(id, actions, callback, timeout)
+        box = HILBox(id, participation, role, actions, callback, timeout)
         t = threading.Thread(target=box.run, args=())
         t.setDaemon(True)
         t.start()

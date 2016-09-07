@@ -7,9 +7,9 @@ class HILComponent(object):
   __metaclass__ = HILNonOverridable
 
   @non_overridable
-  def call(self, conn, id):
-    results = self.run(id)
+  def call(self, conn, id, participation, role):
+    results = self.run(id, participation, role)
     conn.send(results)
 
-  def run(self, id):
+  def run(self, id, participation, role):
     raise NotImplementedError

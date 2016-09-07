@@ -28,7 +28,7 @@ class HILConfig(object):
     data = []
     for k,v in self._config.items():
       for i in self._config[k]:
-        for c in i.get("contexts"):
+        for c in i.get("context").keys():
           data.append(c)
     return data
 
@@ -37,8 +37,8 @@ class HILConfig(object):
     data = []
     for k,v in self._config.items():
       for i in self._config[k]:
-        for c in list(i.get("attention_levels")):
-          data.append(c)
+        for x, c in i.get("attention_levels").items():
+          data.append(x)
     return data
 
   @property
@@ -84,11 +84,9 @@ class HILConfig(object):
         content = json.loads(file.read())
     except:
       raise Exception("Error reading schema file")
-
     schema = content
 
     content = ''
-
     try:
       with open(os.path.join(os.getcwd(), configFileName), 'r') as file:
         content = json.loads(file.read())
@@ -116,26 +114,9 @@ class HILConfig(object):
     current_participation = self._config[participation]
 
     for i in current_participation:
-
-      levels = i.get("attention_levels")
-
-      if not current_level in levels: continue
-
-      for k, v in i.get("contexts").items():
-        if data.get(k) == v:
-          continue
-        else:
-          levels = None
-          break
-
-      if levels:
-        components = []
-        roles = levels.get(current_level)
-        for r in role.split(':'):
-          if r in roles:
-            for c in roles[r]:
-              components.append(c)
-        if components:
-          return components
+      try:
+        return i.get("attention_levels").get(current_level).get(role)
+      except:
+        next
 
     return None
